@@ -17,8 +17,10 @@ def download_video(url, output_folder="downloads"):
         filename = ydl.prepare_filename(info)
     return filename
 
+from moviepy import VideoFileClip, TextClip, CompositeVideoClip
+
 def split_into_shorts(video_path, chunk_length=60, output_folder="shorts"):
-    """Split a video into chunks of chunk_length seconds each."""
+    """Split a video into chunks of chunk_length seconds each, with a 'Part X' watermark."""
     os.makedirs(output_folder, exist_ok=True)
 
     clip = VideoFileClip(video_path)
@@ -27,12 +29,31 @@ def split_into_shorts(video_path, chunk_length=60, output_folder="shorts"):
 
     print(f"Video duration: {total_duration:.1f}s -> {num_chunks} chunks")
 
+    font_path = "C:\\Windows\\Fonts\\arial.ttf"
+
     for i in range(num_chunks):
         start = i * chunk_length
         end = min((i + 1) * chunk_length, total_duration)
         chunk = clip.subclipped(start, end)
+
+        watermark_text = f"Part {i+1}"
+        watermark = (
+            TextClip(
+                text=watermark_text,
+                font=font_path,
+                font_size=50,
+                color="white",
+                stroke_color="black",
+                stroke_width=2,
+            )
+            .with_duration(chunk.duration)
+            .with_position(("center", "top"))
+        )
+
+        final_chunk = CompositeVideoClip([chunk, watermark])
+
         output_file = os.path.join(output_folder, f"short_{i+1}.mp4")
-        chunk.write_videofile(output_file, codec="libx264", audio_codec="aac")
+        final_chunk.write_videofile(output_file, codec="libx264", audio_codec="aac")
         print(f"Saved: {output_file}")
 
     clip.close()
