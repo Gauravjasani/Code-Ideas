@@ -1,1 +1,0 @@
-print("This is an experiment file to test GitHub functionality.")
